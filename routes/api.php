@@ -15,28 +15,20 @@ Route::post("/forgot-password-code", [RecoverPasswordCodeController::class, 'for
 Route::post("/reset-password-validate-code", [RecoverPasswordCodeController::class, 'resetPasswordValidateCode']);
 Route::post("/reset-password-code", [RecoverPasswordCodeController::class, 'resetPasswordCode']);
 
-//usuario
-Route::get('/users', [UserController::class, 'index']); // GET - http://127.0.0.1:8000/api/users?page=2
-Route::get('/users/{user}', [UserController::class, 'show']); // GET - http://127.0.0.1:8000/api/users/1
-Route::post('/users', [UserController::class, 'store']); // POST - http://127.0.0.1:8000/users/bills
-Route::put('/users/{user}', [UserController::class, 'update']); // PUT - http://127.0.0.1:8000/api/users/1
-Route::put('/users-password/{user}', [UserController::class, 'updatePassword']); // PUT - http://127.0.0.1:8000/api/users-password/1
-Route::delete('/users/{user}', [UserController::class, 'destroy']); // DELETE - http://127.0.0.1:8000/api/users/1
-
 // Rota restrita
 Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::get('/profile', [ProfileController::class, 'show']); // GET - http://127.0.0.1:8000/api/profile
     Route::put('/profile', [ProfileController::class, 'update']); // PUT - http://127.0.0.1:8000/api/profile
     Route::put('/profile-password', [ProfileController::class, 'updatePassword']); // PUT - http://127.0.0.1:8000/api/profile-password
-    /*
+
     Route::get('/users', [UserController::class, 'index']); // GET - http://127.0.0.1:8000/api/users?page=2
     Route::get('/users/{user}', [UserController::class, 'show']); // GET - http://127.0.0.1:8000/api/users/1
     Route::post('/users', [UserController::class, 'store']); // POST - http://127.0.0.1:8000/users/bills
     Route::put('/users/{user}', [UserController::class, 'update']); // PUT - http://127.0.0.1:8000/api/users/1
     Route::put('/users-password/{user}', [UserController::class, 'updatePassword']); // PUT - http://127.0.0.1:8000/api/users-password/1
     Route::delete('/users/{user}', [UserController::class, 'destroy']); // DELETE - http://127.0.0.1:8000/api/users/1
-*/
+
     Route::get('/bills', [BillController::class, 'index']); // GET - http://127.0.0.1:8000/api/bills?page=2
     Route::get('/bills/{bill}', [BillController::class, 'show']); // GET - http://127.0.0.1:8000/api/bills/1
     Route::post('/bills', [BillController::class, 'store']); // POST - http://127.0.0.1:8000/api/bills
