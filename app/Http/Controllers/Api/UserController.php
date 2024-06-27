@@ -60,7 +60,7 @@ class UserController extends Controller
 
     /**
      * Cria novo usuário com os dados fornecidos na requisição.
-     * 
+     *
      * @param  \App\Http\Requests\UserRequest  $request O objeto de requisição contendo os dados do usuário a ser criado.
      * @return \Illuminate\Http\JsonResponse
      */
@@ -102,13 +102,14 @@ class UserController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Usuário não cadastrado!',
+                'exception' => $e,
             ], 400);
         }
     }
 
     /**
      * Atualizar os dados de um usuário existente com base nos dados fornecidos na requisição.
-     * 
+     *
      * @param  \App\Http\Requests\UserRequest  $request O objeto de requisição contendo os dados do usuário a ser atualizado.
      * @param  \App\Models\User  $user O usuário a ser atualizado.
      * @return \Illuminate\Http\JsonResponse
@@ -206,7 +207,7 @@ class UserController extends Controller
 
     /**
      * Excluir usuário no banco de dados.
-     * 
+     *
      * @param  \App\Models\User  $user O usuário a ser excluído.
      * @return \Illuminate\Http\JsonResponse
      */
