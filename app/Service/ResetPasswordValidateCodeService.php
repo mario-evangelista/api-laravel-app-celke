@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Class PasswordResetService
- * 
+ *
  * Esta classe fornece métodos para validar códigos de redefinição de senha.
  */
 class ResetPasswordValidateCodeService
@@ -29,7 +29,7 @@ class ResetPasswordValidateCodeService
         $passwordResetTokens = DB::table('password_reset_tokens')->where('email', $email)->first();
 
         // Verificar se encontrou o usuário no banco de dados com token de redefinição de senha
-        if(!$passwordResetTokens){
+        if (!$passwordResetTokens) {
 
             // Salvar log
             Log::notice('Código não encontrado.', ['email' => $email]);
@@ -41,7 +41,7 @@ class ResetPasswordValidateCodeService
         }
 
         // Validar o código enviado pelo usuário com o token salvo no banco de dados
-        if(!Hash::check($code, $passwordResetTokens->token)){
+        if (!Hash::check($code, $passwordResetTokens->token)) {
 
             // Salvar log
             Log::notice('Código inválido.', ['email' => $email]);
@@ -56,7 +56,7 @@ class ResetPasswordValidateCodeService
         $differenceInMinutes = Carbon::parse($passwordResetTokens->created_at)->diffInMinutes(Carbon::now());
 
         // Verificar se a diferença é maior que 60 minutos
-        if($differenceInMinutes > 60){
+        if ($differenceInMinutes > 60) {
 
             // Salvar log
             Log::notice('Código expirado.', ['email' => $email]);
@@ -65,7 +65,6 @@ class ResetPasswordValidateCodeService
                 'status' => false,
                 'message' => 'Código expirado!',
             ];
-
         }
 
         // Sucesso, token válido
@@ -73,8 +72,5 @@ class ResetPasswordValidateCodeService
             'status' => true,
             'message' => 'Código válido!',
         ];
-
-        
     }
-
 }

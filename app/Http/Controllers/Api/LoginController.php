@@ -99,7 +99,7 @@ class LoginController extends Controller
             $user->tokens()->delete();
 
             // Salvar log
-            Log::info('Deslogado com sucesso', ['action_user_id' => $authUserId ]);
+            Log::info('Deslogado com sucesso', ['action_user_id' => $authUserId]);
 
             return response()->json([
                 'status' => true,
