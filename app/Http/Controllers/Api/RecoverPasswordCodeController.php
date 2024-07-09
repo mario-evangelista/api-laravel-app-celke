@@ -9,10 +9,10 @@ use App\Http\Requests\ResetPasswordValidateCodeRequest;
 use App\Mail\SendEmailForgotPasswordCode;
 use App\Models\User;
 use App\Service\ResetPasswordValidateCodeService;
+use App\Service\SendSMSRecoverPasswordService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -31,7 +31,7 @@ class RecoverPasswordCodeController extends Controller
      * @param ForgotPasswordRequest $request O request contendo o e-mail do usuário
      * @return \Illuminate\Http\JsonResponse Resposta indicando sucesso ou falha
      */
-    public function forgotPasswordCode(ForgotPasswordRequest $request): JsonResponse
+    public function forgotPasswordCode(ForgotPasswordRequest $request, SendSMSRecoverPasswordService $sendSMSRecoverPassword): JsonResponse
     {
 
         // Recuperar os dados do usuário no banco de dados com o e-mail
@@ -75,7 +75,7 @@ class RecoverPasswordCodeController extends Controller
             ]);
 
 
-            // Enviar e-mail após cadastrar no banco de dados novo token recuperar senha
+            // Enviar e-mail/sms após cadastrar no banco de dados novo token recuperar senha
             if ($userNewPasswordResets) {
 
                 // Obter a data atual
@@ -90,6 +90,9 @@ class RecoverPasswordCodeController extends Controller
 
                 // Dados para enviar e-mail
                 Mail::to($user->email)->send(new SendEmailForgotPasswordCode($user, $code, $formattedDate, $formattedTime));
+
+                // Dados para enviar SMS
+                $sendSMSRecoverPassword->sendSMSRecoverPassword($user->cellphone_number, $code, $formattedDate, $formattedTime);
             }
 
             // Salvar log
@@ -98,7 +101,8 @@ class RecoverPasswordCodeController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'Enviado e-mail com instruções para recuperar a senha. Acesse a sua caixa de e-mail para recuperar a senha!',
+                // 'message' => 'Enviado e-mail com instruções para recuperar a senha. Acesse a sua caixa de e-mail para recuperar a senha!',
+                'message' => 'Enviado sms com instruções para recuperar a senha. Acesse a sua caixa de sms para recuperar a senha!',
             ], 200);
         } catch (Exception $e) {
 
@@ -127,28 +131,27 @@ class RecoverPasswordCodeController extends Controller
     public function resetPasswordValidateCode(ResetPasswordValidateCodeRequest $request, ResetPasswordValidateCodeService $resetPasswordValidateCode): JsonResponse
     {
 
-        try{
+        try {
 
             // Validar o código do token
             $validationResult = $resetPasswordValidateCode->resetPasswordValidateCode($request->email, $request->code);
 
             // Verificar o resultado da validação
-            if(!$validationResult['status']){
+            if (!$validationResult['status']) {
 
                 // Exibir mensagem de erro
                 return response()->json([
                     'status' => false,
                     'message' => $validationResult['message'],
                 ], 400);
-
             }
 
             // Recuperar os dados do usuário
             $user = User::where('email', $request->email)->first();
 
             // Verificar existe o usuário no banco de dados
-            if(!$user){
-                
+            if (!$user) {
+
                 // Salvar log
                 Log::notice('Usuário não encontrado.', ['email' => $request->email]);
 
@@ -157,9 +160,8 @@ class RecoverPasswordCodeController extends Controller
                     'status' => false,
                     'message' => 'Usuário não encontrado!',
                 ], 400);
-
             }
-                
+
             // Salvar log
             Log::info('Código recuperar senha válido.', ['email' => $request->email]);
 
@@ -167,8 +169,7 @@ class RecoverPasswordCodeController extends Controller
                 'status' => true,
                 'message' => 'Código recuperar senha válido!',
             ], 200);
-
-        } catch (Exception $e){
+        } catch (Exception $e) {
 
             // Salvar log
             Log::warning('Erro validar código recuperar senha.', ['email' => $request->email, 'error' => $e->getMessage()]);
@@ -178,7 +179,6 @@ class RecoverPasswordCodeController extends Controller
                 'message' => 'Código inválido!',
             ], 400);
         }
-        
     }
 
     /**
@@ -197,28 +197,27 @@ class RecoverPasswordCodeController extends Controller
     public function resetPasswordCode(ResetPasswordCodeRequest $request, ResetPasswordValidateCodeService $resetPasswordValidateCode): JsonResponse
     {
 
-        try{
+        try {
 
             // Validar o código do token
             $validationResult = $resetPasswordValidateCode->resetPasswordValidateCode($request->email, $request->code);
 
             // Verificar o resultado da validação
-            if(!$validationResult['status']){
-                
+            if (!$validationResult['status']) {
+
                 // Exibir mensagem de erro
                 return response()->json([
                     'status' => false,
                     'message' => $validationResult['message'],
                 ], 400);
-
             }
 
             // Recuperar os dados do usuário
             $user = User::where('email', $request->email)->first();
 
             // Verificar existe o usuário no banco de dados
-            if(!$user){
-                
+            if (!$user) {
+
                 // Salvar log
                 Log::notice('Usuário não encontrado.', ['email' => $request->email]);
 
@@ -227,7 +226,6 @@ class RecoverPasswordCodeController extends Controller
                     'status' => false,
                     'message' => 'Usuário não encontrado!',
                 ], 400);
-
             }
 
             // Alterar a senha do usuário no banco de dados
@@ -235,14 +233,14 @@ class RecoverPasswordCodeController extends Controller
                 'password' => Hash::make($request->password)
             ]);
 
-            // gerar o token 
+            // gerar o token
             $token = $user->first()->createToken('api-token')->plainTextToken;
 
             // Recuperar os registros recuperar senha do usuário
             $userPasswordResets = DB::table('password_reset_tokens')->where('email', $request->email);
 
             // Se existir token cadastrado para o usuário recuperar senha, excluir o mesmo
-            if($userPasswordResets){
+            if ($userPasswordResets) {
                 $userPasswordResets->delete();
             }
 
@@ -255,7 +253,7 @@ class RecoverPasswordCodeController extends Controller
                 'token' => $token,
                 'message' => 'Senha atualizada com sucesso!',
             ], 200);
-        }catch(Exception $e){
+        } catch (Exception $e) {
 
             // Salvar log
             Log::warning('Senha não atualizada.', ['email' => $request->email, 'error' => $e->getMessage()]);
@@ -264,8 +262,6 @@ class RecoverPasswordCodeController extends Controller
                 'status' => false,
                 'message' => 'Senha não atualizada!',
             ], 400);
-
         }
-        
     }
 }
